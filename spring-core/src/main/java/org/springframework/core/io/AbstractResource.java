@@ -44,6 +44,8 @@ import org.springframework.util.ResourceUtils;
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @since 28.12.2003
+ *
+ * 为 Resource 接口的默认抽象实现。它实现了 Resource 接口的大部分的公共实现，作为 Resource 接口中的重中之重
  */
 public abstract class AbstractResource implements Resource {
 

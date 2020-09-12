@@ -65,7 +65,7 @@ public class StandardBeanExpressionResolver implements BeanExpressionResolver {
 
 	private String expressionSuffix = DEFAULT_EXPRESSION_SUFFIX;
 
-	private ExpressionParser expressionParser;
+	private ExpressionParser expressionParser;//new SpelExpressionParser(new SpelParserConfiguration(null, beanClassLoader));
 
 	private final Map<String, Expression> expressionCache = new ConcurrentHashMap<>(256);
 

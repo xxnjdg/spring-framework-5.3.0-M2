@@ -42,9 +42,9 @@ public class HandlerExecutionChain {
 
 	private static final Log logger = LogFactory.getLog(HandlerExecutionChain.class);
 
-	private final Object handler;
+	private final Object handler;//处理器
 
-	private final List<HandlerInterceptor> interceptorList = new ArrayList<>();
+	private final List<HandlerInterceptor> interceptorList = new ArrayList<>();//拦截器数组
 
 	private int interceptorIndex = -1;
 

@@ -492,6 +492,13 @@ class ResolvableTypeTests {
 	}
 
 	@Test
+	void getGeneric1() throws Exception {
+		ResolvableType type = ResolvableType.forClass(ExtendsList.class);
+		ResolvableType as = type.as(ArrayList.class);
+		System.out.println(as.getGeneric());
+	}
+
+	@Test
 	void getGenericByIndex() throws Exception {
 		ResolvableType type = ResolvableType.forField(Fields.class.getField("stringIntegerMultiValueMap"));
 		assertThat(type.getGeneric(0).getType()).isEqualTo(String.class);

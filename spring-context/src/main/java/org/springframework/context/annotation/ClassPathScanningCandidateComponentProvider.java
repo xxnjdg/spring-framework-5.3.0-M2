@@ -93,8 +93,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 
 	private String resourcePattern = DEFAULT_RESOURCE_PATTERN;
 
+	// 不排除过滤器 TypeFilter 列表
 	private final List<TypeFilter> includeFilters = new LinkedList<>();
 
+	//排除过滤器
 	private final List<TypeFilter> excludeFilters = new LinkedList<>();
 
 	@Nullable
@@ -103,12 +105,15 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	@Nullable
 	private ConditionEvaluator conditionEvaluator;
 
+	// GenericWebApplicationContext ioc 容器
 	@Nullable
 	private ResourcePatternResolver resourcePatternResolver;
 
 	@Nullable
-	private MetadataReaderFactory metadataReaderFactory;
+	private MetadataReaderFactory metadataReaderFactory;//new CachingMetadataReaderFactory(resourceLoader);
 
+	//读取 META-INF/spring.components
+	// TODO: 2020/9/9 xxnjdg 参考 https://blog.csdn.net/zzuhkp/article/details/108257764
 	@Nullable
 	private CandidateComponentsIndex componentsIndex;
 
@@ -228,6 +233,8 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * {@link Conditional @Conditional}-annotated component classes.
 	 * <p>The default is a {@link StandardEnvironment}.
 	 * @param environment the Environment to use
+	 *
+	 *  设置 Environment
 	 */
 	public void setEnvironment(Environment environment) {
 		Assert.notNull(environment, "Environment must not be null");

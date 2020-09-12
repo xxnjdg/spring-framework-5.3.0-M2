@@ -44,6 +44,7 @@ import org.springframework.util.ReflectionUtils;
 
 /**
  * Factory for collections that is aware of common Java and Spring collection types.
+ * 知道常见Java和Spring集合类型的集合的工厂。
  *
  * <p>Mainly for internal use within the framework.
  *

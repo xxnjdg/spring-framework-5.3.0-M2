@@ -235,6 +235,8 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 				this.valueSeparator, ignoreUnresolvablePlaceholders);
 	}
 
+	// String 类型的 text：待解析的字符串
+	// PropertyPlaceholderHelper 类型的 helper：用于解析占位符的工具类。
 	private String doResolvePlaceholders(String text, PropertyPlaceholderHelper helper) {
 		return helper.replacePlaceholders(text, this::getPropertyAsRawString);
 	}
@@ -262,6 +264,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 			}
 			conversionServiceToUse = DefaultConversionService.getSharedInstance();
 		}
+		// 执行转换
 		return conversionServiceToUse.convert(value, targetType);
 	}
 

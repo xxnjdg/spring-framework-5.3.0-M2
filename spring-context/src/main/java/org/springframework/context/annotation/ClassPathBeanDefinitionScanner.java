@@ -61,7 +61,7 @@ import org.springframework.util.PatternMatchUtils;
  * @see org.springframework.stereotype.Controller
  */
 public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateComponentProvider {
-
+	// GenericWebApplicationContext ioc 容器
 	private final BeanDefinitionRegistry registry;
 
 	private BeanDefinitionDefaults beanDefinitionDefaults = new BeanDefinitionDefaults();

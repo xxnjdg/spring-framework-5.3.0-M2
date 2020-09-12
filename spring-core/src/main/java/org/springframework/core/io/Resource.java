@@ -48,6 +48,8 @@ import org.springframework.lang.Nullable;
  * @see ClassPathResource
  * @see ByteArrayResource
  * @see InputStreamResource
+ *
+ *  为 Spring 框架所有资源的抽象和访问接口
  */
 public interface Resource extends InputStreamSource {
 

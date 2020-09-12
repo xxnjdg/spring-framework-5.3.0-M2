@@ -62,6 +62,9 @@ import org.springframework.util.Assert;
  * {@code @RequestMapping}. The merged view of the {@code @RequestMapping}
  * annotation will contain the following attributes:
  *
+ * <p>如果用{@code @PostMapping（“ / home”）}注释方法，则它将包含{@code @PostMapping}和元注释{@code @RequestMapping}的合并注释。
+ * {@code @RequestMapping}批注的合并视图将包含以下属性：
+ *
  * <p><table border="1">
  * <tr>
  * <th>Name</th>
@@ -89,16 +92,24 @@ import org.springframework.util.Assert;
  * from} any Java {@link AnnotatedElement}. They may also be used for sources that
  * don't use reflection (such as those that directly parse bytecode).
  *
+ * {@linkplain #from(AnnotatedElement) 方法获取 {@link MergedAnnotations} 参数是 any Java {@link AnnotatedElement}
+ * 它们也可用于不使用反射的源（例如直接解析字节码的源）。
+ *
  * <p>Different {@linkplain SearchStrategy search strategies} can be used to locate
  * related source elements that contain the annotations to be aggregated. For
  * example, {@link SearchStrategy#TYPE_HIERARCHY} will search both superclasses and
  * implemented interfaces.
+ *
+ * 可以使用不同的{@linkplain SearchStrategy search strategies}来查找包含要聚合的注释的相关源元素。 例如，{@link SearchStrategy#TYPE_HIERARCHY}将同时搜索超类和已实现的接口。
  *
  * <p>From a {@link MergedAnnotations} instance you can either
  * {@linkplain #get(String) get} a single annotation, or {@linkplain #stream()
  * stream all annotations} or just those that match {@linkplain #stream(String)
  * a specific type}. You can also quickly tell if an annotation
  * {@linkplain #isPresent(String) is present}.
+ *
+ * 从{@link MergedAnnotations}实例中，您可以{@linkplain #get（String）获取}单个注释，也可以{@linkplain #stream（）流所有注释}或
+ * 仅匹配{@linkplain #stream的那些 （字符串）特定类型}。 您还可以快速判断是否存在注释{@linkplain #isPresent（String）}。
  *
  * <p>Here are some typical examples:
  *
@@ -126,6 +137,9 @@ import org.springframework.util.Assert;
  * There is no support for retrieving plain Java annotations with this API;
  * please use standard Java reflection or Spring's {@link AnnotationUtils}
  * for simple annotation retrieval purposes.
+ *
+ * 注意：{@code MergedAnnotations} API及其底层模型是为Spring通用组件模型中的可组合注释而设计的，
+ * 重点是属性别名和元注释关系。</ b>不支持检索纯Java注释。 使用此API； 请使用标准Java反射或Spring的{@link AnnotationUtils}进行简单的注释检索。
  *
  * @author Phillip Webb
  * @author Sam Brannen
@@ -317,6 +331,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * Create a new {@link MergedAnnotations} instance containing all
 	 * annotations and meta-annotations from the specified element and,
 	 * depending on the {@link SearchStrategy}, related inherited elements.
+	 *
+	 * 创建一个新的{@link MergedAnnotations}实例，其中包含来自指定元素的所有注释和元注释，并取决于{@link SearchStrategy}，相关的继承元素。
+	 *
 	 * @param element the source element
 	 * @param searchStrategy the search strategy to use
 	 * @param repeatableContainers the repeatable containers that may be used by
@@ -446,6 +463,7 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * Find only directly declared annotations, without considering
 		 * {@link Inherited @Inherited} annotations and without searching
 		 * superclasses or implemented interfaces.
+		 * 仅查找直接声明的注解，而不考虑{@link Inherited @Inherited}注释，也无需搜索超类或已实现的接口。
 		 */
 		DIRECT,
 
@@ -456,6 +474,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * {@link Inherited @Inherited} annotation is ignored for all other
 		 * {@linkplain AnnotatedElement annotated elements}. This strategy does
 		 * not search implemented interfaces.
+		 *
+		 * 查找所有直接声明的注释以及任何{@link Inherited @Inherited}超类注释。 该策略仅在与{@link Class}类型一起使用时才真正有用，
+		 * 因为所有其他{@linkplain AnnotatedElement annotated elements}都将忽略{@link Inherited @Inherited}注释。 此策略不搜索已实现的接口
 		 */
 		INHERITED_ANNOTATIONS,
 
@@ -464,6 +485,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * is similar to {@link #INHERITED_ANNOTATIONS} except the annotations
 		 * do not need to be meta-annotated with {@link Inherited @Inherited}.
 		 * This strategy does not search implemented interfaces.
+		 *
+		 * 查找所有直接声明和超类的注释。 该策略与{@link #INHERITED_ANNOTATIONS}相似，
+		 * 不同之处在于注释不需要使用{@link Inherited @Inherited}进行元注释。 此策略不搜索已实现的接口。
 		 */
 		SUPERCLASS,
 
@@ -471,6 +495,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * Perform a full search of the entire type hierarchy, including
 		 * superclasses and implemented interfaces. Superclass annotations do
 		 * not need to be meta-annotated with {@link Inherited @Inherited}.
+		 *
+		 * 对整个类型层次结构进行完整搜索，包括超类和已实现的接口。
+		 * 超类注释不需要使用{@link Inherited @Inherited}进行元注释。
 		 */
 		TYPE_HIERARCHY,
 
@@ -482,6 +509,10 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * need to be meta-annotated with {@link Inherited @Inherited}. When
 		 * searching a {@link Method} source, this strategy is identical to
 		 * {@link #TYPE_HIERARCHY}.
+		 *
+		 * 在源<em>和任何封闭类中对整个类型层次进行完整搜索。 该策略与{@link #TYPE_HIERARCHY}相似，不同之处在于，
+		 * 还搜索了{@linkplain Class＃getEnclosingClass（）封闭类}。 超类注释不需要使用{@link Inherited @Inherited}进行元注释。
+		 * 搜索{@link方法}源时，此策略与{@link #TYPE_HIERARCHY}相同。
 		 */
 		TYPE_HIERARCHY_AND_ENCLOSING_CLASSES
 	}

@@ -47,12 +47,15 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			null, new Annotation[0], RepeatableContainers.none(), AnnotationFilter.ALL);
 
 
+	//配置类
 	@Nullable
 	private final Object source;
 
+	//配置类
 	@Nullable
 	private final AnnotatedElement element;
 
+	//配置类搜索策略
 	@Nullable
 	private final SearchStrategy searchStrategy;
 
@@ -92,7 +95,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	@Override
 	public <A extends Annotation> boolean isPresent(Class<A> annotationType) {
+		//判断注解是否是不处理
 		if (this.annotationFilter.matches(annotationType)) {
+			//不处理直接返回 false
 			return false;
 		}
 		return Boolean.TRUE.equals(scan(annotationType,
@@ -235,10 +240,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	@Nullable
 	private <C, R> R scan(C criteria, AnnotationsProcessor<C, R> processor) {
 		if (this.annotations != null) {
+			//annotations 不为空直接处理
 			R result = processor.doWithAnnotations(criteria, 0, this.source, this.annotations);
 			return processor.finish(result);
 		}
 		if (this.element != null && this.searchStrategy != null) {
+			//这个分支 annotations 为空
+			//根据搜索策略处理 this.element 类型  processor 不同回调 处理  spring 注解
 			return AnnotationsScanner.scan(criteria, this.element, this.searchStrategy, processor);
 		}
 		return null;
@@ -251,6 +259,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		if (AnnotationsScanner.isKnownEmpty(element, searchStrategy)) {
 			return NONE;
 		}
+		//创建 TypeMappedAnnotations
 		return new TypeMappedAnnotations(element, searchStrategy, repeatableContainers, annotationFilter);
 	}
 
@@ -293,8 +302,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 		private final RepeatableContainers repeatableContainers;
 
+		//过滤器
 		private final AnnotationFilter annotationFilter;
 
+		//是否不遍历组合注解，例如 SpringBootApplication注解声明了  @SpringBootConfiguration @EnableAutoConfiguration 等注解 ，
+		// 如果为true，就不会遍历 @SpringBootConfiguration 等注解了
 		private final boolean directOnly;
 
 		private IsPresent(RepeatableContainers repeatableContainers,
@@ -305,11 +317,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			this.directOnly = directOnly;
 		}
 
+		//requiredType = 请求处理的注解  source   annotations = source 上声明的注解
+		//查找 annotations 注解数组有没有包含 requiredType 注解
 		@Override
 		@Nullable
 		public Boolean doWithAnnotations(Object requiredType, int aggregateIndex,
 				@Nullable Object source, Annotation[] annotations) {
 
+			//遍历
 			for (Annotation annotation : annotations) {
 				if (annotation != null) {
 					Class<? extends Annotation> type = annotation.annotationType();
@@ -327,6 +342,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 							}
 						}
 						if (!this.directOnly) {
+							//创建 AnnotationTypeMappings
 							AnnotationTypeMappings mappings = AnnotationTypeMappings.forAnnotationType(type);
 							for (int i = 0; i < mappings.size(); i++) {
 								AnnotationTypeMapping mapping = mappings.get(i);
@@ -345,6 +361,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 				AnnotationFilter annotationFilter, boolean directOnly) {
 
 			// Use a single shared instance for common combinations
+			// 从缓存中获取
 			if (annotationFilter == AnnotationFilter.PLAIN) {
 				if (repeatableContainers == RepeatableContainers.none()) {
 					return SHARED[directOnly ? 0 : 1];
@@ -353,6 +370,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 					return SHARED[directOnly ? 2 : 3];
 				}
 			}
+			//或者创建
 			return new IsPresent(repeatableContainers, annotationFilter, directOnly);
 		}
 	}

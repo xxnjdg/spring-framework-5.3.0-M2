@@ -32,6 +32,7 @@ import org.springframework.util.StringUtils;
  */
 public class StandardClassMetadata implements ClassMetadata {
 
+	// bean 类
 	private final Class<?> introspectedClass;
 
 

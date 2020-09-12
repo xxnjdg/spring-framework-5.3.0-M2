@@ -143,6 +143,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 		return this.applicationStartup;
 	}
 
+	//查找符合参数的监听器，并执行监听器回调
 	@Override
 	public void multicastEvent(ApplicationEvent event) {
 		multicastEvent(event, resolveDefaultEventType(event));
@@ -167,6 +168,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 				invocationStep.end();
 			}
 			else {
+				//回调监听器方法
 				invokeListener(listener, event);
 			}
 		}
@@ -200,6 +202,7 @@ public class SimpleApplicationEventMulticaster extends AbstractApplicationEventM
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private void doInvokeListener(ApplicationListener listener, ApplicationEvent event) {
 		try {
+			//回调监听器方法
 			listener.onApplicationEvent(event);
 		}
 		catch (ClassCastException ex) {

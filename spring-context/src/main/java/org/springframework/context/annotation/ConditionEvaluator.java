@@ -47,7 +47,7 @@ import org.springframework.util.MultiValueMap;
  */
 class ConditionEvaluator {
 
-	private final ConditionContextImpl context;
+	private final ConditionContextImpl context;//ConditionContextImpl
 
 
 	/**
@@ -78,7 +78,9 @@ class ConditionEvaluator {
 	 * @return if the item should be skipped
 	 */
 	public boolean shouldSkip(@Nullable AnnotatedTypeMetadata metadata, @Nullable ConfigurationPhase phase) {
+		//判断 metadata.MergedAnnotations 是否有 Conditional.class 注解
 		if (metadata == null || !metadata.isAnnotated(Conditional.class.getName())) {
+			//不存在直接返回
 			return false;
 		}
 
@@ -89,7 +91,7 @@ class ConditionEvaluator {
 			}
 			return shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);
 		}
-
+		//获取  Condition 列表
 		List<Condition> conditions = new ArrayList<>();
 		for (String[] conditionClasses : getConditionClasses(metadata)) {
 			for (String conditionClass : conditionClasses) {
@@ -99,12 +101,13 @@ class ConditionEvaluator {
 		}
 
 		AnnotationAwareOrderComparator.sort(conditions);
-
+		//如果不为空，遍历 Condition
 		for (Condition condition : conditions) {
 			ConfigurationPhase requiredPhase = null;
 			if (condition instanceof ConfigurationCondition) {
 				requiredPhase = ((ConfigurationCondition) condition).getConfigurationPhase();
 			}
+			//判断是否满足条件，condition.matches 返回 true 及满足条件
 			if ((requiredPhase == null || requiredPhase == phase) && !condition.matches(this.context, metadata)) {
 				return true;
 			}
@@ -112,14 +115,14 @@ class ConditionEvaluator {
 
 		return false;
 	}
-
+	// 获取 Conditional.class 注解 value 属性字符串列表
 	@SuppressWarnings("unchecked")
 	private List<String[]> getConditionClasses(AnnotatedTypeMetadata metadata) {
 		MultiValueMap<String, Object> attributes = metadata.getAllAnnotationAttributes(Conditional.class.getName(), true);
 		Object values = (attributes != null ? attributes.get("value") : null);
 		return (List<String[]>) (values != null ? values : Collections.emptyList());
 	}
-
+	//实例化
 	private Condition getCondition(String conditionClassName, @Nullable ClassLoader classloader) {
 		Class<?> conditionClass = ClassUtils.resolveClassName(conditionClassName, classloader);
 		return (Condition) BeanUtils.instantiateClass(conditionClass);
@@ -131,14 +134,18 @@ class ConditionEvaluator {
 	 */
 	private static class ConditionContextImpl implements ConditionContext {
 
+		// GenericWebApplicationContext ioc 容器
 		@Nullable
 		private final BeanDefinitionRegistry registry;
 
+		// GenericWebApplicationContext ioc 容器 beanFactory 属性
 		@Nullable
 		private final ConfigurableListableBeanFactory beanFactory;
 
+		//environment
 		private final Environment environment;
 
+		// GenericWebApplicationContext ioc 容器
 		private final ResourceLoader resourceLoader;
 
 		@Nullable

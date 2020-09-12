@@ -244,6 +244,8 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * the given object type (including subclasses), or an empty array if none
 	 * @see FactoryBean#getObjectType
 	 * @see BeanFactoryUtils#beanNamesForTypeIncludingAncestors(ListableBeanFactory, Class, boolean, boolean)
+	 *
+	 * 返回对于指定类型Bean（包括子类）的所有名字
 	 */
 	String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit);
 

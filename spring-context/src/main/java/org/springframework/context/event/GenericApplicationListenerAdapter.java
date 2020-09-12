@@ -54,7 +54,9 @@ public class GenericApplicationListenerAdapter implements GenericApplicationList
 	@SuppressWarnings("unchecked")
 	public GenericApplicationListenerAdapter(ApplicationListener<?> delegate) {
 		Assert.notNull(delegate, "Delegate listener must not be null");
+		//监听器类
 		this.delegate = (ApplicationListener<ApplicationEvent>) delegate;
+		//监听器类事件类型 = 监听器超类泛型类型
 		this.declaredEventType = resolveDeclaredEventType(this.delegate);
 	}
 

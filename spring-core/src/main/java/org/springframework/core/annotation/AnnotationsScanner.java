@@ -48,7 +48,7 @@ abstract class AnnotationsScanner {
 
 	private static final Method[] NO_METHODS = {};
 
-
+	//缓存  AnnotatedElement = 类型或者方法 Annotation[] =  AnnotatedElement 上声明的注解数组
 	private static final Map<AnnotatedElement, Annotation[]> declaredAnnotationCache =
 			new ConcurrentReferenceHashMap<>(256);
 
@@ -69,6 +69,8 @@ abstract class AnnotationsScanner {
 	 * @param searchStrategy the search strategy to use
 	 * @param processor the processor that receives the annotations
 	 * @return the result of {@link AnnotationsProcessor#finish(Object)}
+	 *
+	 * 扫描指定元素的层次结构以获取相关注释，并根据需要调用处理器。
 	 */
 	@Nullable
 	static <C, R> R scan(C context, AnnotatedElement source, SearchStrategy searchStrategy,
@@ -82,6 +84,7 @@ abstract class AnnotationsScanner {
 	private static <C, R> R process(C context, AnnotatedElement source,
 			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
 
+		//根据 source 类型不同 选择
 		if (source instanceof Class) {
 			return processClass(context, (Class<?>) source, searchStrategy, processor);
 		}
@@ -91,6 +94,7 @@ abstract class AnnotationsScanner {
 		return processElement(context, source, processor);
 	}
 
+	//处理 source 是类型
 	@Nullable
 	private static <C, R> R processClass(C context, Class<?> source,
 			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
@@ -164,6 +168,7 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	//搜索策略 TYPE_HIERARCHY
 	@Nullable
 	private static <C, R> R processClassHierarchy(C context, Class<?> source,
 			AnnotationsProcessor<C, R> processor, boolean includeInterfaces, boolean includeEnclosing) {
@@ -177,20 +182,25 @@ abstract class AnnotationsScanner {
 			AnnotationsProcessor<C, R> processor, boolean includeInterfaces, boolean includeEnclosing) {
 
 		try {
+			//执行 processor  doWithAggregate 回调
 			R result = processor.doWithAggregate(context, aggregateIndex[0]);
 			if (result != null) {
 				return result;
 			}
+			//source 是 java 包 或者是 类型是 ordered.class
 			if (hasPlainJavaAnnotationsOnly(source)) {
 				return null;
 			}
+			//获取 source 类上声明的注释
 			Annotation[] annotations = getDeclaredAnnotations(source, false);
+			// 执行回调
 			result = processor.doWithAnnotations(context, aggregateIndex[0], source, annotations);
 			if (result != null) {
 				return result;
 			}
 			aggregateIndex[0]++;
 			if (includeInterfaces) {
+				//处理实现的接口
 				for (Class<?> interfaceType : source.getInterfaces()) {
 					R interfacesResult = processClassHierarchy(context, aggregateIndex,
 						interfaceType, processor, true, includeEnclosing);
@@ -201,6 +211,7 @@ abstract class AnnotationsScanner {
 			}
 			Class<?> superclass = source.getSuperclass();
 			if (superclass != Object.class && superclass != null) {
+				//处理超类
 				R superclassResult = processClassHierarchy(context, aggregateIndex,
 					superclass, processor, includeInterfaces, includeEnclosing);
 				if (superclassResult != null) {
@@ -432,6 +443,7 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	//source 有没有声明 annotationType 类的注解，有就返回
 	@SuppressWarnings("unchecked")
 	@Nullable
 	static <A extends Annotation> A getDeclaredAnnotation(AnnotatedElement source, Class<A> annotationType) {
@@ -443,17 +455,24 @@ abstract class AnnotationsScanner {
 		}
 		return null;
 	}
-
+	//获取声明的注解
+	//source = 类 或者 方法
 	static Annotation[] getDeclaredAnnotations(AnnotatedElement source, boolean defensive) {
 		boolean cached = false;
+		//先从缓存获取
 		Annotation[] annotations = declaredAnnotationCache.get(source);
 		if (annotations != null) {
+			//缓存中有
 			cached = true;
 		}
 		else {
+			//缓存中没有
+			//获取 source 上声明的注解
 			annotations = source.getDeclaredAnnotations();
 			if (annotations.length != 0) {
+				//有声明的注解
 				boolean allIgnored = true;
+				//遍历注解
 				for (int i = 0; i < annotations.length; i++) {
 					Annotation annotation = annotations[i];
 					if (isIgnorable(annotation.annotationType()) ||
@@ -466,6 +485,7 @@ abstract class AnnotationsScanner {
 				}
 				annotations = (allIgnored ? NO_ANNOTATIONS : annotations);
 				if (source instanceof Class || source instanceof Member) {
+					//存入缓存
 					declaredAnnotationCache.put(source, annotations);
 					cached = true;
 				}
@@ -476,15 +496,17 @@ abstract class AnnotationsScanner {
 		}
 		return annotations.clone();
 	}
-
+	//是否要忽略  返回 true 表示该注解后续不会被处理
+	// annotationType = 注解在 "java.lang", "org.springframework.lang" 这些包下就会返回 true
 	private static boolean isIgnorable(Class<?> annotationType) {
 		return AnnotationFilter.PLAIN.matches(annotationType);
 	}
 
-	static boolean isKnownEmpty(AnnotatedElement source, SearchStrategy searchStrategy) {
+	static boolean  isKnownEmpty(AnnotatedElement source, SearchStrategy searchStrategy) {
 		if (hasPlainJavaAnnotationsOnly(source)) {
 			return true;
 		}
+		//如果 searchStrategy 是仅查找直接声明的注解  或  source没有超类
 		if (searchStrategy == SearchStrategy.DIRECT || isWithoutHierarchy(source, searchStrategy)) {
 			if (source instanceof Method && ((Method) source).isBridge()) {
 				return false;
@@ -495,6 +517,7 @@ abstract class AnnotationsScanner {
 	}
 
 	static boolean hasPlainJavaAnnotationsOnly(@Nullable Object annotatedElement) {
+		//  annotatedElement 是 Class
 		if (annotatedElement instanceof Class) {
 			return hasPlainJavaAnnotationsOnly((Class<?>) annotatedElement);
 		}
@@ -506,16 +529,18 @@ abstract class AnnotationsScanner {
 		}
 	}
 
+	//java 包 或者是 类型是 ordered.class
 	static boolean hasPlainJavaAnnotationsOnly(Class<?> type) {
 		return (type.getName().startsWith("java.") || type == Ordered.class);
 	}
-
+	//是否没有超类
 	private static boolean isWithoutHierarchy(AnnotatedElement source, SearchStrategy searchStrategy) {
 		if (source == Object.class) {
 			return true;
 		}
 		if (source instanceof Class) {
 			Class<?> sourceClass = (Class<?>) source;
+			//没有超类
 			boolean noSuperTypes = (sourceClass.getSuperclass() == Object.class &&
 					sourceClass.getInterfaces().length == 0);
 			return (searchStrategy == SearchStrategy.TYPE_HIERARCHY_AND_ENCLOSING_CLASSES ? noSuperTypes &&

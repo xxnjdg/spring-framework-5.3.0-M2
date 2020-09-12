@@ -49,36 +49,50 @@ final class AnnotationTypeMapping {
 	private static final MirrorSet[] EMPTY_MIRROR_SETS = new MirrorSet[0];
 
 
+	//父节点 根节点为null
 	@Nullable
 	private final AnnotationTypeMapping source;
 
+	//根节点，所有节点都指向同一对象
 	private final AnnotationTypeMapping root;
 
+	//距离根节点的距离,根节电为0
 	private final int distance;
 
+	//注解
 	private final Class<? extends Annotation> annotationType;
 
+	//从子节点开始到父节点经历的所有注解
 	private final List<Class<? extends Annotation>> metaTypes;
 
+	//注解 和 annotationType 一样，根节点为null
 	@Nullable
 	private final Annotation annotation;
 
+	//注解属性方法
 	private final AttributeMethods attributes;
 
 	private final MirrorSets mirrorSets;
 
+	//aliasMappings[attributes索引] = this.root.getAttributes() 索引
 	private final int[] aliasMappings;
 
+	//如果 attributes 和 this.root.getAttributes() 存在方法名相同
+	//数组存 相同方法在 this.root.getAttributes() 的索引
 	private final int[] conventionMappings;
 
+	//value = 方法索引？
 	private final int[] annotationValueMappings;
 
+	//value = 指向自己？
 	private final AnnotationTypeMapping[] annotationValueSource;
 
+	//key = 真实被引用的方法 value = 自身注解使用AliasFor声明的方法
 	private final Map<Method, List<Method>> aliasedBy;
 
 	private final boolean synthesizable;
 
+	//用在检测
 	private final Set<Method> claimedAliases = new HashSet<>();
 
 
@@ -120,9 +134,11 @@ final class AnnotationTypeMapping {
 	private Map<Method, List<Method>> resolveAliasedForTargets() {
 		Map<Method, List<Method>> aliasedBy = new HashMap<>();
 		for (int i = 0; i < this.attributes.size(); i++) {
+			//注解方法
 			Method attribute = this.attributes.get(i);
 			AliasFor aliasFor = AnnotationsScanner.getDeclaredAnnotation(attribute, AliasFor.class);
 			if (aliasFor != null) {
+				//存在 AliasFor 注解 获取真实的方法
 				Method target = resolveAliasTarget(attribute, aliasFor);
 				aliasedBy.computeIfAbsent(target, key -> new ArrayList<>()).add(attribute);
 			}
@@ -153,6 +169,7 @@ final class AnnotationTypeMapping {
 		if (!StringUtils.hasLength(targetAttributeName)) {
 			targetAttributeName = attribute.getName();
 		}
+		//获取目标方法
 		Method target = AttributeMethods.forAnnotationType(targetAnnotation).get(targetAttributeName);
 		if (target == null) {
 			if (targetAnnotation == this.annotationType) {
@@ -608,8 +625,11 @@ final class AnnotationTypeMapping {
 	 */
 	class MirrorSets {
 
+		//assigned 的 去重版
 		private MirrorSet[] mirrorSets;
 
+		//下标对应 this.attributes 下标 值为 MirrorSet ，数组项可能相同，
+		// 可参考 @ComponentScan @AliasFor("basePackages") @AliasFor("value") 互相隐射自己的方法，那么组就是指向同一个
 		private final MirrorSet[] assigned;
 
 		MirrorSets() {
@@ -626,6 +646,7 @@ final class AnnotationTypeMapping {
 				if (aliases.contains(attribute)) {
 					size++;
 					if (size > 1) {
+						//有两个以上 @AliasFor 互相映射到自己的方法
 						if (mirrorSet == null) {
 							mirrorSet = new MirrorSet();
 							this.assigned[last] = mirrorSet;
@@ -677,8 +698,10 @@ final class AnnotationTypeMapping {
 		 */
 		class MirrorSet {
 
+			//相同方法的数量
 			private int size;
 
+			//值 @AliasFor 互相映射到自己的方法的 this.attributes 下标
 			private final int[] indexes = new int[attributes.size()];
 
 			void update() {

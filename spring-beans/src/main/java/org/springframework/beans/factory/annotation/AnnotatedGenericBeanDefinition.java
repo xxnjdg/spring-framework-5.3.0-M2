@@ -43,7 +43,7 @@ import org.springframework.util.Assert;
 @SuppressWarnings("serial")
 public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implements AnnotatedBeanDefinition {
 
-	private final AnnotationMetadata metadata;
+	private final AnnotationMetadata metadata;//new StandardAnnotationMetadata(introspectedClass, true);
 
 	@Nullable
 	private MethodMetadata factoryMethodMetadata;

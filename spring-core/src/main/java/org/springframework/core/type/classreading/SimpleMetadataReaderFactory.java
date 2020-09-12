@@ -34,6 +34,7 @@ import org.springframework.util.ClassUtils;
  */
 public class SimpleMetadataReaderFactory implements MetadataReaderFactory {
 
+	// GenericWebApplicationContext ioc 容器
 	private final ResourceLoader resourceLoader;
 
 

@@ -39,6 +39,7 @@ final class AttributeMethods {
 	static final AttributeMethods NONE = new AttributeMethods(null, new Method[0]);
 
 
+	// key = 注解 value = AttributeMethods
 	private static final Map<Class<? extends Annotation>, AttributeMethods> cache =
 			new ConcurrentReferenceHashMap<>();
 
@@ -49,16 +50,21 @@ final class AttributeMethods {
 		return m1 != null ? -1 : 1;
 	};
 
-
+	//注解
 	@Nullable
 	private final Class<? extends Annotation> annotationType;
 
+	//注解下方法数组
 	private final Method[] attributeMethods;
 
+	//和attributeMethods长度一致。canThrowTypeNotPresentException每一项对应（attributeMethods方法的返回值 == 类 类数组 枚举）
+	//可参考 isValid 方法
 	private final boolean[] canThrowTypeNotPresentException;
 
+	//attributeMethods数组至少有一个方法有默认值就为 true
 	private final boolean hasDefaultValueMethod;
 
+	//attributeMethods数组至少有一个方法返回值是注解或注解数组就是 true
 	private final boolean hasNestedAnnotation;
 
 
@@ -102,12 +108,15 @@ final class AttributeMethods {
 	 * @param annotation the annotation to check
 	 * @return {@code true} if all values are present
 	 * @see #validate(Annotation)
+	 *
+	 * 确定是否可以安全地访问给定注解中的值，而不会引起任何{@link TypeNotPresentException TypeNotPresentExceptions}。
 	 */
 	boolean isValid(Annotation annotation) {
 		assertAnnotation(annotation);
 		for (int i = 0; i < size(); i++) {
 			if (canThrowTypeNotPresentException(i)) {
 				try {
+					//执行，如果返回的类能加载存在就是有效
 					get(i).invoke(annotation);
 				}
 				catch (Throwable ex) {
@@ -244,6 +253,8 @@ final class AttributeMethods {
 	 * Get the attribute methods for the given annotation type.
 	 * @param annotationType the annotation type
 	 * @return the attribute methods for the annotation type
+	 *
+	 * 为 annotationType 注解 获取属性方法
 	 */
 	static AttributeMethods forAnnotationType(@Nullable Class<? extends Annotation> annotationType) {
 		if (annotationType == null) {
@@ -253,6 +264,7 @@ final class AttributeMethods {
 	}
 
 	private static AttributeMethods compute(Class<? extends Annotation> annotationType) {
+		//获取 annotationType 注解方法
 		Method[] methods = annotationType.getDeclaredMethods();
 		int size = methods.length;
 		for (int i = 0; i < methods.length; i++) {
@@ -266,9 +278,10 @@ final class AttributeMethods {
 		}
 		Arrays.sort(methods, methodComparator);
 		Method[] attributeMethods = Arrays.copyOf(methods, size);
+		//创建
 		return new AttributeMethods(annotationType, attributeMethods);
 	}
-
+	//参数为0 返回值不是 void 就是属性方法
 	private static boolean isAttributeMethod(Method method) {
 		return (method.getParameterCount() == 0 && method.getReturnType() != void.class);
 	}

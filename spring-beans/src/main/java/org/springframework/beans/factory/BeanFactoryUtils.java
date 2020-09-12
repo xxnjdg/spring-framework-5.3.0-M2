@@ -66,6 +66,8 @@ public abstract class BeanFactoryUtils {
 	 * @param name the name of the bean
 	 * @return whether the given name is a factory dereference
 	 * @see BeanFactory#FACTORY_BEAN_PREFIX
+	 *
+	 * name是否已&开头
 	 */
 	public static boolean isFactoryDereference(@Nullable String name) {
 		return (name != null && name.startsWith(BeanFactory.FACTORY_BEAN_PREFIX));
@@ -83,6 +85,7 @@ public abstract class BeanFactoryUtils {
 		if (!name.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
 			return name;
 		}
+		//处理&开头的name  key = name value = 不带&name
 		return transformedBeanNameCache.computeIfAbsent(name, beanName -> {
 			do {
 				beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());
@@ -100,6 +103,8 @@ public abstract class BeanFactoryUtils {
 	 * @see #GENERATED_BEAN_NAME_SEPARATOR
 	 * @see org.springframework.beans.factory.support.BeanDefinitionReaderUtils#generateBeanName
 	 * @see org.springframework.beans.factory.support.DefaultBeanNameGenerator
+	 *
+	 * name包含#
 	 */
 	public static boolean isGeneratedBeanName(@Nullable String name) {
 		return (name != null && name.contains(GENERATED_BEAN_NAME_SEPARATOR));
@@ -111,6 +116,8 @@ public abstract class BeanFactoryUtils {
 	 * @param name the potentially generated bean name
 	 * @return the raw bean name
 	 * @see #GENERATED_BEAN_NAME_SEPARATOR
+	 *
+	 * 去掉#
 	 */
 	public static String originalBeanName(String name) {
 		Assert.notNull(name, "'name' must not be null");

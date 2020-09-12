@@ -172,6 +172,7 @@ public abstract class StringUtils {
 	private static boolean containsText(CharSequence str) {
 		int strLen = str.length();
 		for (int i = 0; i < strLen; i++) {
+			//isWhitespace 方法用于判断指定字符是否为空白字符，空白符包含：空格、tab 键、换行符。
 			if (!Character.isWhitespace(str.charAt(i))) {
 				return true;
 			}

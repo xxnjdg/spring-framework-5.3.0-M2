@@ -47,8 +47,12 @@ final class AnnotationTypeMappings {
 
 	private static final IntrospectionFailureLogger failureLogger = IntrospectionFailureLogger.DEBUG;
 
+	//key = 过滤器 value = Cache(RepeatableContainers.standardRepeatables(), 过滤器)
+	//两个过滤器是相同
 	private static final Map<AnnotationFilter, Cache> standardRepeatablesCache = new ConcurrentReferenceHashMap<>();
 
+	//key = 过滤器 value = Cache(RepeatableContainers.none(), 过滤器)
+	//两个过滤器是相同
 	private static final Map<AnnotationFilter, Cache> noRepeatablesCache = new ConcurrentReferenceHashMap<>();
 
 
@@ -56,6 +60,7 @@ final class AnnotationTypeMappings {
 
 	private final AnnotationFilter filter;
 
+	//AnnotationTypeMapping 集合
 	private final List<AnnotationTypeMapping> mappings;
 
 
@@ -81,6 +86,7 @@ final class AnnotationTypeMappings {
 	}
 
 	private void addMetaAnnotationsToQueue(Deque<AnnotationTypeMapping> queue, AnnotationTypeMapping source) {
+		//获取注解上声明的注解
 		Annotation[] metaAnnotations = AnnotationsScanner.getDeclaredAnnotations(source.getAnnotationType(), false);
 		for (Annotation metaAnnotation : metaAnnotations) {
 			if (!isMappable(source, metaAnnotation)) {
@@ -109,6 +115,7 @@ final class AnnotationTypeMappings {
 			Class<? extends Annotation> annotationType, @Nullable Annotation ann) {
 
 		try {
+			//创建 AnnotationTypeMapping
 			queue.addLast(new AnnotationTypeMapping(source, annotationType, ann));
 		}
 		catch (Exception ex) {
@@ -220,6 +227,7 @@ final class AnnotationTypeMappings {
 
 		private final AnnotationFilter filter;
 
+		//key = 注解  value = AnnotationTypeMappings
 		private final Map<Class<? extends Annotation>, AnnotationTypeMappings> mappings;
 
 		/**

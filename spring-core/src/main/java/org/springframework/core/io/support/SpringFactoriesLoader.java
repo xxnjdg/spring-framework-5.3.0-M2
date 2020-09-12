@@ -122,6 +122,9 @@ public final class SpringFactoriesLoader {
 	 * {@code null} to use the default
 	 * @throws IllegalArgumentException if an error occurs while loading factory names
 	 * @see #loadFactories
+	 *
+	 * META-INF/spring.factories 文件查找 key = factoryType 的 key value 对
+	 * 返回对应 value 列表
 	 */
 	public static List<String> loadFactoryNames(Class<?> factoryType, @Nullable ClassLoader classLoader) {
 		ClassLoader classLoaderToUse = classLoader;
@@ -141,15 +144,20 @@ public final class SpringFactoriesLoader {
 		result = new HashMap<>();
 		try {
 			Enumeration<URL> urls = classLoader.getResources(FACTORIES_RESOURCE_LOCATION);
+			//遍历多个 FACTORIES_RESOURCE_LOCATION 文件
 			while (urls.hasMoreElements()) {
 				URL url = urls.nextElement();
 				UrlResource resource = new UrlResource(url);
 				Properties properties = PropertiesLoaderUtils.loadProperties(resource);
+				// 遍历单个文件的 key value 对
 				for (Map.Entry<?, ?> entry : properties.entrySet()) {
+					//key
 					String factoryTypeName = ((String) entry.getKey()).trim();
+					//value 列表
 					String[] factoryImplementationNames =
 							StringUtils.commaDelimitedListToStringArray((String) entry.getValue());
 					for (String factoryImplementationName : factoryImplementationNames) {
+						//key value 列表 存入 result
 						result.computeIfAbsent(factoryTypeName, key -> new ArrayList<>())
 								.add(factoryImplementationName.trim());
 					}
@@ -159,6 +167,7 @@ public final class SpringFactoriesLoader {
 			// Replace all lists with unmodifiable lists containing unique elements
 			result.replaceAll((factoryType, implementations) -> implementations.stream().distinct()
 					.collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList)));
+			//存入缓存
 			cache.put(classLoader, result);
 		}
 		catch (IOException ex) {

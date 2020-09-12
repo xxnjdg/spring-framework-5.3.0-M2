@@ -46,8 +46,11 @@ import org.springframework.util.ReflectionUtils;
  */
 public class StandardAnnotationMetadata extends StandardClassMetadata implements AnnotationMetadata {
 
+	// MergedAnnotations.from(introspectedClass,
+	//				SearchStrategy.INHERITED_ANNOTATIONS, RepeatableContainers.none());
 	private final MergedAnnotations mergedAnnotations;
 
+	//true
 	private final boolean nestedAnnotationsAsMap;
 
 	@Nullable

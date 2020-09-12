@@ -47,14 +47,15 @@ import org.springframework.util.Assert;
  * @see AnnotationConfigApplicationContext#register
  */
 public class AnnotatedBeanDefinitionReader {
-
+	//AnnotationConfigApplicationContext
+	// GenericWebApplicationContext ioc 容器
 	private final BeanDefinitionRegistry registry;
 
 	private BeanNameGenerator beanNameGenerator = AnnotationBeanNameGenerator.INSTANCE;
 
 	private ScopeMetadataResolver scopeMetadataResolver = new AnnotationScopeMetadataResolver();
 
-	private ConditionEvaluator conditionEvaluator;
+	private ConditionEvaluator conditionEvaluator;//ConditionEvaluator
 
 
 	/**
@@ -250,12 +251,15 @@ public class AnnotatedBeanDefinitionReader {
 			@Nullable Class<? extends Annotation>[] qualifiers, @Nullable Supplier<T> supplier,
 			@Nullable BeanDefinitionCustomizer[] customizers) {
 
+		//创建 BeanDefinition
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
+		//查找 beanClass 是否有 Conditional.class 注解，如果有就判断是否满足条件
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
 
 		abd.setInstanceSupplier(supplier);
+		//获取 beanClass 上的 scope.class 注解 ，如果没有使用默认
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
 		abd.setScope(scopeMetadata.getScopeName());
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
@@ -282,6 +286,7 @@ public class AnnotatedBeanDefinitionReader {
 
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+		//注册
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
 
