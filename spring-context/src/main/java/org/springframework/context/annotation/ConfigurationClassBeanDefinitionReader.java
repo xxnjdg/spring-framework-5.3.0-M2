@@ -133,6 +133,8 @@ class ConfigurationClassBeanDefinitionReader {
 	/**
 	 * Read a particular {@link ConfigurationClass}, registering bean definitions
 	 * for the class itself and all of its {@link Bean} methods.
+	 *
+	 * 阅读特定的{@link ConfigurationClass}，为类本身及其所有{@link Bean}方法注册bean定义。
 	 */
 	private void loadBeanDefinitionsForConfigurationClass(
 			ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator) {
@@ -146,14 +148,19 @@ class ConfigurationClassBeanDefinitionReader {
 			return;
 		}
 
+		//只有 @SpringbootApplication注解的配置类 和 自动扫描扫到到 @Component @Configuration 类注册进ioc容器
 		if (configClass.isImported()) {
+			//其他自动配置类，任何类的内部类，任何类的导入类都没有注册进ioc容器，在这里注册
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
+			//注册 @Bean 方法
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
 
+		//注册 importResource
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
+		//注册 ImportBeanDefinitionRegistrar
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
 

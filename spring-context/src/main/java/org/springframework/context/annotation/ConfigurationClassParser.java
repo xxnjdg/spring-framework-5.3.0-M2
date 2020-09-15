@@ -124,16 +124,20 @@ class ConfigurationClassParser {
 
 	private final ProblemReporter problemReporter;
 
+	//环境
 	private final Environment environment;
 
+	//资源加载器
 	private final ResourceLoader resourceLoader;
 
+	//ioc 容器
 	private final BeanDefinitionRegistry registry;
 
 	private final ComponentScanAnnotationParser componentScanParser;
 
 	private final ConditionEvaluator conditionEvaluator;
 
+	//保存要ioc容器实例化配置类，包含自己定义的，和自动配置添加进来的
 	private final Map<ConfigurationClass, ConfigurationClass> configurationClasses = new LinkedHashMap<>();
 
 	private final Map<String, ConfigurationClass> knownSuperclasses = new HashMap<>();
@@ -171,6 +175,7 @@ class ConfigurationClassParser {
 			BeanDefinition bd = holder.getBeanDefinition();
 			try {
 				if (bd instanceof AnnotatedBeanDefinition) {
+					//解析
 					parse(((AnnotatedBeanDefinition) bd).getMetadata(), holder.getBeanName());
 				}
 				else if (bd instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) bd).hasBeanClass()) {
@@ -189,6 +194,7 @@ class ConfigurationClassParser {
 			}
 		}
 
+		//处理
 		this.deferredImportSelectorHandler.process();
 	}
 
@@ -221,6 +227,7 @@ class ConfigurationClassParser {
 	}
 
 
+	//处理配置类
 	protected void processConfigurationClass(ConfigurationClass configClass, Predicate<String> filter) throws IOException {
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
@@ -244,8 +251,10 @@ class ConfigurationClassParser {
 		}
 
 		// Recursively process the configuration class and its superclass hierarchy.
+		// 递归处理配置类及其超类层次结构。
 		SourceClass sourceClass = asSourceClass(configClass, filter);
 		do {
+			//执行处理
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass, filter);
 		}
 		while (sourceClass != null);
@@ -285,12 +294,15 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @ComponentScan annotations
+		//获取 ComponentScans ComponentScan 的值
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
 		if (!componentScans.isEmpty() &&
 				!this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
 			for (AnnotationAttributes componentScan : componentScans) {
 				// The config class is annotated with @ComponentScan -> perform the scan immediately
+				// 使用@ComponentScan注释配置类->立即执行扫描
+				//这些 BeanDefinition 都已经注册了
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
@@ -300,6 +312,7 @@ class ConfigurationClassParser {
 						bdCand = holder.getBeanDefinition();
 					}
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
+						//如果bean存在 ，处理bean上的注解
 						parse(bdCand.getBeanClassName(), holder.getBeanName());
 					}
 				}
@@ -322,6 +335,7 @@ class ConfigurationClassParser {
 		}
 
 		// Process individual @Bean methods
+		//解析 @Bean 方法
 		Set<MethodMetadata> beanMethods = retrieveBeanMethodMetadata(sourceClass);
 		for (MethodMetadata methodMetadata : beanMethods) {
 			configClass.addBeanMethod(new BeanMethod(methodMetadata, configClass));
@@ -353,8 +367,11 @@ class ConfigurationClassParser {
 
 		Collection<SourceClass> memberClasses = sourceClass.getMemberClasses();
 		if (!memberClasses.isEmpty()) {
+			//处理列表
 			List<SourceClass> candidates = new ArrayList<>(memberClasses.size());
 			for (SourceClass memberClass : memberClasses) {
+				//1 存在 org.springframework.context.annotation.ConfigurationClassUtils.candidateIndicators 和 bean.class 类
+				//2 memberClass 和 configClass 不相等
 				if (ConfigurationClassUtils.isConfigurationCandidate(memberClass.getMetadata()) &&
 						!memberClass.getMetadata().getClassName().equals(configClass.getMetadata().getClassName())) {
 					candidates.add(memberClass);
@@ -368,6 +385,7 @@ class ConfigurationClassParser {
 				else {
 					this.importStack.push(configClass);
 					try {
+						//处理
 						processConfigurationClass(candidate.asConfigClass(configClass), filter);
 					}
 					finally {
@@ -514,6 +532,7 @@ class ConfigurationClassParser {
 
 	/**
 	 * Returns {@code @Import} class, considering all meta-annotations.
+	 * 考虑所有元注释，返回{@code @Import}类。
 	 */
 	private Set<SourceClass> getImports(SourceClass sourceClass) throws IOException {
 		Set<SourceClass> imports = new LinkedHashSet<>();
@@ -541,10 +560,13 @@ class ConfigurationClassParser {
 		if (visited.add(sourceClass)) {
 			for (SourceClass annotation : sourceClass.getAnnotations()) {
 				String annName = annotation.getMetadata().getClassName();
+				//如果声明的注解不是 import
 				if (!annName.equals(Import.class.getName())) {
+					//递归遍历
 					collectImports(annotation, imports, visited);
 				}
 			}
+			//处理 import
 			imports.addAll(sourceClass.getAnnotationAttributes(Import.class.getName(), "value"));
 		}
 	}
@@ -553,6 +575,7 @@ class ConfigurationClassParser {
 			Collection<SourceClass> importCandidates, Predicate<String> exclusionFilter,
 			boolean checkForCircularImports) {
 
+		//没有 import
 		if (importCandidates.isEmpty()) {
 			return;
 		}
@@ -564,9 +587,11 @@ class ConfigurationClassParser {
 			this.importStack.push(configClass);
 			try {
 				for (SourceClass candidate : importCandidates) {
+					//处理 ImportSelector.class 子类
 					if (candidate.isAssignable(ImportSelector.class)) {
 						// Candidate class is an ImportSelector -> delegate to it to determine imports
 						Class<?> candidateClass = candidate.loadClass();
+						//实例化 ImportSelector 对象
 						ImportSelector selector = ParserStrategyUtils.instantiateClass(candidateClass, ImportSelector.class,
 								this.environment, this.resourceLoader, this.registry);
 						Predicate<String> selectorFilter = selector.getExclusionFilter();
@@ -574,26 +599,34 @@ class ConfigurationClassParser {
 							exclusionFilter = exclusionFilter.or(selectorFilter);
 						}
 						if (selector instanceof DeferredImportSelector) {
+							//加入到 deferredImportSelectorHandler
 							this.deferredImportSelectorHandler.handle(configClass, (DeferredImportSelector) selector);
 						}
 						else {
+							//以字符串的形式导入类
 							String[] importClassNames = selector.selectImports(currentSourceClass.getMetadata());
 							Collection<SourceClass> importSourceClasses = asSourceClasses(importClassNames, exclusionFilter);
 							processImports(configClass, currentSourceClass, importSourceClasses, exclusionFilter, false);
 						}
 					}
+					//处理 ImportBeanDefinitionRegistrar.class 子类
 					else if (candidate.isAssignable(ImportBeanDefinitionRegistrar.class)) {
 						// Candidate class is an ImportBeanDefinitionRegistrar ->
 						// delegate to it to register additional bean definitions
+						// 委托它注册其他bean定义
 						Class<?> candidateClass = candidate.loadClass();
+						//实例化 candidateClass 对象
 						ImportBeanDefinitionRegistrar registrar =
 								ParserStrategyUtils.instantiateClass(candidateClass, ImportBeanDefinitionRegistrar.class,
 										this.environment, this.resourceLoader, this.registry);
+						//加入到 configClass
+						//在后续处理实例化BeanDefinition
 						configClass.addImportBeanDefinitionRegistrar(registrar, currentSourceClass.getMetadata());
 					}
 					else {
 						// Candidate class not an ImportSelector or ImportBeanDefinitionRegistrar ->
 						// process it as an @Configuration class
+						//导入单个类
 						this.importStack.registerImport(
 								currentSourceClass.getMetadata(), candidate.getMetadata().getClassName());
 						processConfigurationClass(candidate.asConfigClass(configClass), exclusionFilter);
@@ -639,6 +672,7 @@ class ConfigurationClassParser {
 	private SourceClass asSourceClass(ConfigurationClass configurationClass, Predicate<String> filter) throws IOException {
 		AnnotationMetadata metadata = configurationClass.getMetadata();
 		if (metadata instanceof StandardAnnotationMetadata) {
+			//传入配置类作为参数
 			return asSourceClass(((StandardAnnotationMetadata) metadata).getIntrospectedClass(), filter);
 		}
 		return asSourceClass(metadata.getClassName(), filter);
@@ -646,6 +680,8 @@ class ConfigurationClassParser {
 
 	/**
 	 * Factory method to obtain a {@link SourceClass} from a {@link Class}.
+	 *
+	 * 获取 SourceClass 工厂方法
 	 */
 	SourceClass asSourceClass(@Nullable Class<?> classType, Predicate<String> filter) throws IOException {
 		if (classType == null || filter.test(classType.getName())) {
@@ -745,6 +781,7 @@ class ConfigurationClassParser {
 
 	private class DeferredImportSelectorHandler {
 
+		//配置类导入类DeferredImportSelector子类 那么这里就会加入list子项
 		@Nullable
 		private List<DeferredImportSelectorHolder> deferredImportSelectors = new ArrayList<>();
 
@@ -788,11 +825,15 @@ class ConfigurationClassParser {
 
 	private class DeferredImportSelectorGroupingHandler {
 
+		//key = group 的 class 对象  value = new DeferredImportSelectorGrouping(group 实例化对象)
 		private final Map<Object, DeferredImportSelectorGrouping> groupings = new LinkedHashMap<>();
 
+		//getConfigurationClass().getMetadata() getConfigurationClass
 		private final Map<AnnotationMetadata, ConfigurationClass> configurationClasses = new HashMap<>();
 
+		// 把 group 和 声明这个 group 的配置类注册进来
 		public void register(DeferredImportSelectorHolder deferredImport) {
+			//获取 import group
 			Class<? extends Group> group = deferredImport.getImportSelector().getImportGroup();
 			DeferredImportSelectorGrouping grouping = this.groupings.computeIfAbsent(
 					(group != null ? group : deferredImport),
@@ -806,6 +847,7 @@ class ConfigurationClassParser {
 			for (DeferredImportSelectorGrouping grouping : this.groupings.values()) {
 				Predicate<String> exclusionFilter = grouping.getCandidateFilter();
 				grouping.getImports().forEach(entry -> {
+					//configurationClass 导入自动配置类的配置类注解元数据
 					ConfigurationClass configurationClass = this.configurationClasses.get(entry.getMetadata());
 					try {
 						processImports(configurationClass, asSourceClass(configurationClass, exclusionFilter),
@@ -824,6 +866,8 @@ class ConfigurationClassParser {
 			}
 		}
 
+		//type = import group class
+		//如果 type 不为空 实例化对象返回
 		private Group createGroup(@Nullable Class<? extends Group> type) {
 			Class<? extends Group> effectiveType = (type != null ? type : DefaultDeferredImportSelectorGroup.class);
 			return ParserStrategyUtils.instantiateClass(effectiveType, Group.class,
@@ -874,6 +918,7 @@ class ConfigurationClassParser {
 		 * @return each import with its associated configuration class
 		 */
 		public Iterable<Group.Entry> getImports() {
+			//调用 group
 			for (DeferredImportSelectorHolder deferredImport : this.deferredImports) {
 				this.group.process(deferredImport.getConfigurationClass().getMetadata(),
 						deferredImport.getImportSelector());
@@ -918,8 +963,10 @@ class ConfigurationClassParser {
 	 */
 	private class SourceClass implements Ordered {
 
+		//各种配置类 或者 MetadataReader 子类就只有一个 SimpleMetadataReader
 		private final Object source;  // Class or MetadataReader
 
+		//配置类注解元数据 或 SimpleMetadataReader
 		private final AnnotationMetadata metadata;
 
 		public SourceClass(Object source) {
@@ -964,6 +1011,7 @@ class ConfigurationClassParser {
 			return new ConfigurationClass((MetadataReader) this.source, importedBy);
 		}
 
+		//封装 source 除去父类的所有的内部类成 SourceClass ，返回列表
 		public Collection<SourceClass> getMemberClasses() throws IOException {
 			Object sourceToProcess = this.source;
 			if (sourceToProcess instanceof Class) {
@@ -1027,6 +1075,7 @@ class ConfigurationClassParser {
 			return result;
 		}
 
+		//获取 source 声明的注解
 		public Set<SourceClass> getAnnotations() {
 			Set<SourceClass> result = new LinkedHashSet<>();
 			if (this.source instanceof Class) {
@@ -1068,6 +1117,8 @@ class ConfigurationClassParser {
 			String[] classNames = (String[]) annotationAttributes.get(attribute);
 			Set<SourceClass> result = new LinkedHashSet<>();
 			for (String className : classNames) {
+				//如果 annType 注解存在，注解value属性值也有
+				//调用 getRelated 封装 SourceClass 返回
 				result.add(getRelated(className));
 			}
 			return result;

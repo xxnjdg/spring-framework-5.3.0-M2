@@ -42,6 +42,7 @@ public class CachingMetadataReaderFactory extends SimpleMetadataReaderFactory {
 
 	/** MetadataReader cache: either local or shared at the ResourceLoader level. */
 	//((DefaultResourceLoader) resourceLoader).getResourceCache(MetadataReader.class);
+	// Resource new SimpleMetadataReader(resource, this.resourceLoader.getClassLoader());
 	@Nullable
 	private Map<Resource, MetadataReader> metadataReaderCache;
 

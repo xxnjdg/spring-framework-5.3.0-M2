@@ -55,13 +55,21 @@ final class ConfigurationClass {
 	@Nullable
 	private String beanName;
 
+	//被谁导入
+	// 例如 ConfigurationClass是自动配置类，importedBy就是我们写的注解了@SpringbootApplication的配置类
+	// 还可以是 自动配置类他的外部类
 	private final Set<ConfigurationClass> importedBy = new LinkedHashSet<>(1);
 
+	//保存 @Bean 方法
 	private final Set<BeanMethod> beanMethods = new LinkedHashSet<>();
 
+	//导入的资源
+	//后续会调用处理实例化beanBefinition
 	private final Map<String, Class<? extends BeanDefinitionReader>> importedResources =
 			new LinkedHashMap<>();
 
+	//value = 注解@import配置类元注解
+	//后续会调用处理实例化beanBefinition
 	private final Map<ImportBeanDefinitionRegistrar, AnnotationMetadata> importBeanDefinitionRegistrars =
 			new LinkedHashMap<>();
 
